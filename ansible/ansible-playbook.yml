@@ -1,0 +1,61 @@
+---
+- hosts: all
+  become: true
+  vars:
+    container_name: "my-banking-container"
+    container_image: "utkarshapatil123/banking:1"
+    container_port: 8081
+
+  tasks:
+    - name: Install aptitude
+      apt:
+        name: aptitude
+        state: latest
+        update_cache: true
+
+    - name: Install required system packages
+      apt:
+        pkg:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - software-properties-common
+          - python3-pip
+          - virtualenv
+          - python3-setuptools
+        state: latest
+        update_cache: true
+
+    - name: Add Docker GPG apt Key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Add Docker Repository
+      apt_repository:
+        repo: deb https://download.docker.com/linux/ubuntu jammy stable
+        state: present
+
+    - name: Update apt and install docker-ce
+      apt:
+        name: docker-ce
+        state: latest
+        update_cache: true
+
+    - name: Install OpenJDK 11
+      apt:
+        name: openjdk-11-jdk
+        state: latest
+        update_cache: true
+
+    - name: Install Docker Module for Python
+      pip:
+        name: docker
+
+    - name: Pull the Docker image from Docker Hub
+      community.docker.docker_image:
+        name: "{{ container_image }}"
+        source: pull
+
+    - name: Run the Docker container
+      command: "docker run -itd -p {{ container_port }}:{{ container_port }} {{ container_image }}"
